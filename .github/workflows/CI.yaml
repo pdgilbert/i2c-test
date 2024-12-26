@@ -1,0 +1,83 @@
+# Check with
+# yamllint CI.yaml | grep syntax
+
+on:
+  push:
+    branches: [ main, dev  ]
+  pull_request:
+  schedule:
+    - cron: 0 1 * * 1
+
+name: eg build
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+
+#################################################################################################
+#################################################################################################
+
+  I2CExamples:
+    name: ExI
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      matrix:
+
+        eg:  [aht20-bl-semi,    aht20-em-semi,  aht20-dr-semi,   sht30-em-semi, shtcx-semi,   
+              xca9548a-aht20-bl, xca9548a-aht20-em, xca9548a-aht20-dr,  xca9548a_hdc2080,
+             ]
+             
+        brd: [bluepill, blackpill-stm32f401, blackpill-stm32f411, weact-stm32g474, devEBox-stm32h750]  
+
+        #NB sections in brd above must be one-to-one with brd: below or matrix is messed up
+        include:
+           - brd: "bluepill"
+             mcu:  stm32f103
+             hal: "stm32f1xx"
+             trg: "thumbv7m-none-eabi"
+           - brd: "blackpill-stm32f411"
+             mcu:  stm32f411
+             hal: "stm32f4xx"
+             trg: "thumbv7em-none-eabihf"
+           - brd: "blackpill-stm32f401"
+             mcu:  stm32f401
+             hal: "stm32f4xx"
+             trg: "thumbv7em-none-eabihf"
+           - brd: "weact-stm32g474"
+             mcu:  stm32g474xE
+             hal: "stm32g4xx"
+             trg: "thumbv7em-none-eabihf"
+           - brd: "devEBox-stm32h750"
+             mcu:  stm32h750             
+             hal: "stm32h7xx"
+             trg: "thumbv7em-none-eabihf"
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          #profile: minimal
+          toolchain: nightly
+          target: ${{ matrix.trg }}
+    
+      - name: Configure caching 
+        uses: actions/cache@v3
+        with:
+          key: ${{ matrix.brd }}
+          path: |
+            ${{ env.HOME }}/.cargo
+            target
+
+      - name: tree
+        run: cargo tree
+
+      - name: Build
+        run: cargo build  --no-default-features --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }}
+
+      - name: Build example 
+        run: cargo build    --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ${{ matrix.eg }}
+
+#################################################################################################
+#################################################################################################
