@@ -19,17 +19,17 @@ jobs:
 #################################################################################################
 
   I2CExamples:
-    name: ExI
+    name:
     runs-on: ubuntu-latest
     continue-on-error: true
     strategy:
       matrix:
 
-        eg:  [aht20-bl-semi,    aht20-em-semi,  aht20-dr-semi,   sht30-em-semi, shtcx-semi,   
-              xca9548a-aht20-bl, xca9548a-aht20-em, xca9548a-aht20-dr,  xca9548a_hdc2080,
+        eg:  [aht20-bl-semi,      aht20-em-semi,     aht20-dr-semi,    sht30-em-semi,   shtcx-semi,   
+              xca9548a-aht20-bl, xca9548a-aht20-em, xca9548a-aht20-dr, xca9548a_sht30, xca9548a_shtc3,
              ]
              
-        brd: [bluepill, blackpill-stm32f401, blackpill-stm32f411, weact-stm32g474, devEBox-stm32h750]  
+        brd: [bluepill, blackpill-stm32f401, blackpill-stm32f411, weact-stm32g474,]  
 
         #NB sections in brd above must be one-to-one with brd: below or matrix is messed up
         include:
@@ -48,10 +48,6 @@ jobs:
            - brd: "weact-stm32g474"
              mcu:  stm32g474xE
              hal: "stm32g4xx"
-             trg: "thumbv7em-none-eabihf"
-           - brd: "devEBox-stm32h750"
-             mcu:  stm32h750             
-             hal: "stm32h7xx"
              trg: "thumbv7em-none-eabihf"
 
     steps:
