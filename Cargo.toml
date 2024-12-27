@@ -32,7 +32,7 @@ aht20-driver     = { version = "2.0.0", default-features = false } #eh-1
 
 
 embedded-sht3x   =  "0.1.0"     #eh-1 and both sync and async
-#embedded-sht3x   =  https://gitlab.com/ghislainmary/embedded-sht3x/
+#embedded-sht3x   =  { git = "https://gitlab.com/ghislainmary/embedded-sht3x" }
 
 shtcx         =  { git = "https://github.com/dbrgn/shtcx-rs" }
 
