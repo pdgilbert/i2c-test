@@ -19,14 +19,14 @@ jobs:
 #################################################################################################
 
   I2CExamples:
-    name:
+    name:eg
     runs-on: ubuntu-latest
     continue-on-error: true
     strategy:
       matrix:
 
-        eg:  [aht20-bl-semi,      aht20-em-semi,     aht20-dr-semi,    sht30-em-semi,   shtcx-semi,   
-              xca9548a-aht20-bl, xca9548a-aht20-em, xca9548a-aht20-dr, xca9548a_sht30, xca9548a_shtc3,
+        eg:  [aht20-bl-semi,      aht20-em-semi,     aht20-dr-semi,    sht30-em-semi,   shtc3-semi,   
+              xca9548a-aht20-bl, xca9548a-aht20-em, xca9548a-aht20-dr, xca9548a-sht30, xca9548a-shtc3,
              ]
              
         brd: [bluepill, blackpill-stm32f401, blackpill-stm32f411, weact-stm32g474,]  
