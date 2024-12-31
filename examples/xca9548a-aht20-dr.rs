@@ -12,8 +12,10 @@ use panic_semihosting as _;
 #[cfg(not(debug_assertions))]
 use panic_halt as _;
 
-// Need to run with debug console if hprintln is uncommented, otherwise stalls waiting to print.
-use cortex_m_semihosting::hprintln;
+// This example will run powered by battery if  hprintln statements are commented out.
+// The semihost console is needed if hprintln statements are uncommented. Otherwise code stalls waiting to print.
+//use cortex_m_semihosting::hprintln;
+//use cortex_m::asm;
 
 use cortex_m_rt::entry;
 use core::fmt::Write;
@@ -33,11 +35,13 @@ use embedded_graphics::{
 
 type DisplaySizeType = ssd1306::prelude::DisplaySize128x64;
 
+// Note: The sreen layout accommodates no more than 4 sensors installed! If more are installed then
+//       the code will probably panic trying to write beyond the limit of the screen variable.
 const ROTATION: DisplayRotation = DisplayRotation::Rotate0;   // 0, 90, 180, 270
 const DISPLAYSIZE: DisplaySizeType = ssd1306::prelude::DisplaySize128x64;
 const PPC: usize = 12;  // verticle pixels per character plus space for FONT_6X10 
-const DISPLAY_LINES: usize = 12;     // in characters for 128x64   Rotate90
-const DISPLAY_COLUMNS: usize = 12;  // in characters   Rotate90
+const DISPLAY_LINES: usize = 6;     // in characters for 128x64   Rotate0
+const DISPLAY_COLUMNS: usize = 20;  // in characters   Rotate0
 const R_VAL: heapless::String<DISPLAY_COLUMNS> = heapless::String::new();
 
 type  ScreenType = [heapless::String<DISPLAY_COLUMNS>; DISPLAY_LINES];
@@ -146,19 +150,16 @@ fn main() -> ! {
 
     //  a loop for this should be possible, but my attempts cause lifetime problems.
     let mut z = AHT20::new(switch1parts.i2c0,  S_ADDR);
-    hprintln!("sensor 0 ");
+    //hprintln!("sensor 0 ");
     sensors[0] = match z.init(&mut delay) { Ok(v) => {Some(v)},  Err(_v) => {None} };
-    hprintln!("sensor 0 init");
 
     let mut z = AHT20::new(switch1parts.i2c1,  S_ADDR);
-    hprintln!("sensor 1 ");
+    //hprintln!("sensor 1 ");
     sensors[1] = match z.init(&mut delay) { Ok(v) => {Some(v)},  Err(_v) => {None} };
-    hprintln!("sensor 1 init");
 
     let mut z = AHT20::new(switch1parts.i2c2,  S_ADDR);
-    hprintln!("sensor 2 ");
+    //hprintln!("sensor 2 ");
     sensors[2] = match z.init(&mut delay) { Ok(v) => {Some(v)},  Err(_v) => {None} };
-    hprintln!("sensor 2 init");
 
     let mut z = AHT20::new(switch1parts.i2c3,  S_ADDR);
     sensors[3] = match z.init(&mut delay) { Ok(v) => {Some(v)},  Err(_v) => {None} };
@@ -175,19 +176,22 @@ fn main() -> ! {
     let mut z = AHT20::new(switch1parts.i2c7,  S_ADDR);
     sensors[7] = match z.init(&mut delay) { Ok(v) => {Some(v)},  Err(_v) => {None} };
 
+    screen[0].clear();
+    screen[1].clear();
+    write!(screen[0], "Sensors in use:").unwrap();
 
     for  i in 0..7 {  // 7 is sensors.len(() 
-       screen[0].clear();
-       hprintln!("J{}", i);
-       if  sensors[i].is_some() {write!(screen[0], "J{} in use", i).unwrap()}
-       show_screen(&screen, &mut display);
-       delay.delay_ms(500);
+       //hprintln!("J{}", i+1);
+       if  sensors[i].is_some() {write!(screen[1], "{} ", i+1).unwrap()}
     };
 
-    screen[0].clear();
-    write!(screen[0], "    °C %RH").unwrap();
+    show_screen(&screen, &mut display);
+    delay.delay_ms(5000);
 
-    hprintln!("loop");
+    screen[0].clear();
+    write!(screen[0], "   °C   %RH").unwrap();
+
+    //hprintln!("loop");
     loop {   // Read humidity and temperature.
       let mut ln = 1;  // screen line to write. Should make this roll if number of sensors exceed DISPLAY_LINES
 
@@ -197,9 +201,11 @@ fn main() -> ! {
    
                Some(sens) => {screen[ln].clear();
                               match sens.measure(&mut delay) {
-                                   Ok(m)      => {//hprintln!("{} deg C, {}% RH", m.temperature,m.humidity).unwrap();
-                                                  write!(screen[ln], "J{} {:.2} {:.2}",
-                                                          i, m.temperature, m.humidity).unwrap();
+                                   Ok(m)      => {//hprintln!("{} deg C, {}% RH", m.temperature, m.humidity);
+                                                  //hprintln!("xJ{} {:.1} {:.1}x", i+1, m.temperature, m.humidity);
+                                                  //asm::bkpt(); // next panics if write has too many chars for screen
+                                                  write!(screen[ln], "J{} {:.1} {:.1}",
+                                                          i+1, m.temperature, m.humidity).unwrap();
                                                  },
                                    Err(e)     => {//sens.reset().unwrap(); MAY NEED RESET WHEN THERE ARE ERRORS
                                                   //hprintln!("read error {:?}", e).unwrap();

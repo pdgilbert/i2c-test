@@ -13,8 +13,9 @@ use panic_semihosting as _;
 #[cfg(not(debug_assertions))]
 use panic_halt as _;
 
-// Need to run with debug console if hprintln is uncommented, otherwise stalls waiting to print.
-use cortex_m_semihosting::hprintln;
+// This example will run powered by battery if  hprintln statements are commented out.
+// The semihost console is needed if hprintln statements are uncommented. Otherwise code stalls waiting to print.
+//use cortex_m_semihosting::hprintln;
 //use cortex_m::asm;   //for asm::bkpt();  debugging
 
 
@@ -36,11 +37,13 @@ use embedded_graphics::{
 
 type DisplaySizeType = ssd1306::prelude::DisplaySize128x64;
 
-const ROTATION: DisplayRotation = DisplayRotation::Rotate90;   // 0, 90, 180, 270
+// Note: The sreen layout accommodates no more than 4 sensors installed! If more are installed then
+//       the code will probably panic trying to write beyond the limit of the screen variable.
+const ROTATION: DisplayRotation = DisplayRotation::Rotate0;   // 0, 90, 180, 270
 const DISPLAYSIZE: DisplaySizeType = ssd1306::prelude::DisplaySize128x64;
 const PPC: usize = 12;  // verticle pixels per character plus space for FONT_6X10 
-const DISPLAY_LINES: usize = 12;     // in characters for 128x64   Rotate90
-const DISPLAY_COLUMNS: usize = 12;  // in characters   Rotate90
+const DISPLAY_LINES: usize = 12;     // in characters for 128x64   Rotate0
+const DISPLAY_COLUMNS: usize = 20;  // in characters   Rotate0
 const R_VAL: heapless::String<DISPLAY_COLUMNS> = heapless::String::new();
 
 type  ScreenType = [heapless::String<DISPLAY_COLUMNS>; DISPLAY_LINES];
@@ -107,11 +110,11 @@ where
 fn main() -> ! {
     let dp = Peripherals::take().unwrap();
 
-    let (i2c1, i2c2, mut led, mut delay1, _clock) = setup::setup_from_dp(dp);
+    let (i2c1, i2c2, mut led, mut delay, _clock) = setup::setup_from_dp(dp);
 
     led.off();
 
-    led.blink(2000_u16, &mut delay1); // Blink LED to indicate setup finished.
+    led.blink(2000_u16, &mut delay); // Blink LED to indicate setup finished.
 
     /////////////////////   ssd
     let interface = I2CDisplayInterface::new(i2c2);
@@ -126,7 +129,7 @@ fn main() -> ! {
           .draw(&mut display).unwrap();
     display.flush().unwrap();
 
-    led.blink(500_u16, &mut delay1); // Blink LED to indicate Ssd1306 initialized.
+    led.blink(500_u16, &mut delay); // Blink LED to indicate Ssd1306 initialized.
 
     let mut screen: ScreenType = [R_VAL; DISPLAY_LINES];
 
@@ -150,33 +153,40 @@ fn main() -> ! {
     let parts  = [switch1parts.i2c0, switch1parts.i2c1, switch1parts.i2c2, switch1parts.i2c3,
                   switch1parts.i2c4, switch1parts.i2c5, switch1parts.i2c6, switch1parts.i2c7];
 
-    hprintln!("prt in parts");
+    //hprintln!("prt in parts");
 
     let mut i = 0;  // not very elegant
     for  prt in parts {
-       hprintln!("screen[0].clear()");
        screen[0].clear();
-       hprintln!("prt {}", i);
+       //hprintln!("prt {}", i);
        let z = Aht20::new(prt, AltDelay{});  // crate assumes address,
       
-       //sensors[i] = Some(z);                 // no Result so must assume ok
-       if i < 1 {sensors[i] = Some(z)};        // test with only first sensor[0] in J1 
-       write!(screen[0], "J{} assumed", i).unwrap();
-       show_screen(&screen, &mut display);
-       delay1.delay_ms(500);
-       
+       //sensors[i] = Some(z);    // no Result so must manually indicate sensor locations. J1 has i=0
+       if i==0 || i==1 || i==4 || i==5   {sensors[i] = Some(z)}; 
+      
        i += 1;
     };
 
     screen[0].clear();
+    screen[1].clear();
+    write!(screen[0], "Sensors in use:").unwrap();
+
+    for  i in 0..7 {  // 7 is sensors.len(() 
+       //hprintln!("J{}", i+1);
+       if  sensors[i].is_some() {write!(screen[1], "{} ", i+1).unwrap()}
+    };
+
+    show_screen(&screen, &mut display);
+    delay.delay_ms(5000);
+
+    screen[0].clear();
     write!(screen[0], "    °C %RH").unwrap();
 
-    hprintln!("loop");
     loop {   // Read humidity and temperature.
       let mut ln = 1;  // screen line to write. Should make this roll if number of sensors exceed DISPLAY_LINES
     
       for  i in 0..sensors.len() {
-          hprintln!("i {}", i);
+         // hprintln!("i {}", i);
           //asm::bkpt(); 
           
           match   &mut sensors[i] {
@@ -185,22 +195,22 @@ fn main() -> ! {
                Some(sens) => {screen[ln].clear();
                               match sens.read() {
                                    Ok((h, t)) => {//hprintln!("{} deg C, {}% RH", t.celsius(), h.rh()).unwrap();
-                                                  write!(screen[ln], "J{} {:.2} {:.2}",
-                                                          i, t.celsius(), h.rh()).unwrap();
+                                                  write!(screen[ln], "J{} {:.1} {:.1}",
+                                                          i+1, t.celsius(), h.rh()).unwrap();
                                                  },
                                    Err(e)     => {//sens.reset().unwrap(); MAY NEED RESET WHEN THERE ARE ERRORS
                                                   //hprintln!("read error {:?}", e).unwrap();
-                                                  write!(screen[ln], "J{} read error. Reset{:?}", 0, e).unwrap();
+                                                  write!(screen[ln], "J{} read err. {:?}", 0, e).unwrap();
                                                  }
                                    };
                               show_screen(&screen, &mut display);
                               ln += 1;
                               ln = ln % DISPLAY_LINES;
-                              delay1.delay_ms(500);
+                              delay.delay_ms(500);
                               },
            };          
        };
-       delay1.delay_ms(5000);
+       delay.delay_ms(5000);
     }
 }
  

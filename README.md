@@ -87,90 +87,61 @@ for my project with multiplexed sensors :
 
 ## Run Testing
 
+All examples and device crates use `embedded-hal v1.0.0 and  `embedded-hal v1.0.0` versions of MCU hals. 
+All examples compile with  stm32f1xx (bluepill), stm32f4xx (blackpill stm32f401 and stm32f411),
+and stm32g4xx (stm32g474xE). (See the github "actions" tab to confirm if that is still true.)
+
 Compiling unfortunately does not mean everything works. Results from manually running 
-examples on hardware are as follows:
+examples on hardware are below. HALs and device crates may require some level of optimization in order
+to work on hardware. (See https://github.com/stm32-rs/stm32f4xx-hal/issues/828.) The results below
+are for tests with `release` and `dev` profiles set in `Cargo.toml` as
+
+```
+[profile.dev] 
+debug = true 
+lto = true 
+opt-level = 1
+
+[profile.release] 
+debug = true 
+lto = true 
+opt-level = "s" 
+```
+
+### Summary of hardwaree testing Dec 30-31, 2024:
+
+#### `*semi` examples  [ aht20-bl-semi, aht20-dr-semi, aht20-em-semi, sht30-em-semi, and shtc3-semi ]
+
+ * Using `stm32f4xx-hal#585dd0f` on blackpill `stm32f401` and `stm32f411` 
+
+   -  all examples work (tested with both `dev` and `release` profiles).
 
 
-### Summary of issues as of Dec. 2024:
+ * Using `stm32f1xx-hal#6c5dc881` on bluepill 
 
-(Using `stm32f1xx-hal v0.10.0  and also https://github.com/stm32-rs/stm32f1xx-hal#5fc8b999,
-`stm32f4xx-hal v0.22.1` and also https://github.com/stm32-rs/stm32f4xx-hal#ed88ea13, 
-`stm32g4xx-hal` from https://github.com/techmccat/stm32g4xx-hal#9462f4cd branch `hal-1` and also
- https://github.com/pdgilbert/stm32g4xx-hal branch `hal-1`. )
+   - example  `sht30-em-semi` gives a "not yet implemented"  error.
 
-All examples use `embedded-hal v1.0.0 and  `embedded-hal v1.0.0` versions of MCU hals. 
-All examples compile with  stm32f1xx (bluepill), stm32f4xx (blackpill stm32f401 and stm32f411) and stm32g4xx (stm32g474xE).
-
-The `xca9548a*` examples compile but all fail to run, even when the sensor `*semi` crate works.
-Running on `bluepill` requires `--release` so it is hard to debug. I have had no success running
-with `bluepill` so far.  Blackpill stm32f401 and blackpill stm32f411 produce similar results and
-are referred to simply as blackpill.
+   - all other `*semi` examples work. 
 
 
-#### Example `aht20-dr-semi` 
+ * Using `stm32g4xx on stm32g474xE example
 
-(using crate `aht20-driver v2.0.0` and also git commit `#fd81e034` https://github.com/anglerud/aht20-driver)
-Runs with `stm32g4xx` on `stm32g474xE`. 
-[NB  *** if scl/sda wire are reversed gives: panicked at examples/aht20-dr-semi.rs:84:49:
-called `Result::unwrap()` on an `Err` value: I2c(Nack) ]
+   - examples `aht20-bl-semi` and `aht20-dr-semi` work both `release and `dev`.
 
-With `stm32f4xx` (blackpill) it does not return from the first call to `init the sensor...`. 
+   - example `aht20-em-semi` stalls frequently at `aht.measure()`.
 
-Remote target In: aht20_dr_semi::__cortex_m_rt_m* L84   PC: 0x8002802
-84      let mut aht = aht20_uninit.init(&mut delay).unwrap();  
+   - example `sht30-em-semi`  stalls at sen.measure().
 
-Remote target In: aht20_driver::AHT20<stm32f4xx_* L361  PC: 0x80022be
-361          while !self.check_status()?.is_calibrated() {
-
-Remote target In: aht20_driver::AHT20<stm32f4xx_* L389  PC: 0x8002192
-389          self.i2c    
-
-Remote target In: stm32f4xx_hal::i2c::hal_1::blo* L11   PC: 0x8001872
-11              self.read(addr, buffer)   
-
-Remote target In: stm32f4xx_hal::i2c::I2c<stm32f* L439  PC: 0x800116a 
-439          self.read_inner(addr.into(), buffer, true) 
-
-Remote target In: stm32f4xx_hal::i2c::I2c<stm32f* L476  PC: 0x8000a68 
-476              while self.i2c.cr1().read().stop().bit_is_set() {}    
-
-#### Example aht20-bl-semi
-
-(using crate `aht20` https://github.com/blueluna/aht20#07a72ca9e725bdc9d0ae6ec4ec265ed53a07d69f")
-Runs with stm32g4xx on stm32g474xE. 
-With stm32f4xx (blackpill) it does not return from the first call to `aht.read()`.  ..  an initialization call to the hal.
+   - example `shtc3-semi`  panicked at examples/shtc3-semi.rs:86:65: Normal mode measurement failed: I2c(Nack)
 
 
-#### Example aht20-em-semi 
+#### `xca9548a*` examples [ xca9548a-aht20-bl, xca9548a-aht20-dr, xca9548a-aht20-em, xca9548a-sht30 and xca9548a-shtc3 ]
 
-(using crate `embedded-aht20 v0.1.3` https://github.com/ghismary/embedded-aht20)
-Runs with stm32g4xx on stm32g474xE. 
-With stm32f4xx (blackpill) it does not return from Start the sensor  ... an initialization call to the hal.
+ * Using `stm32f4xx-hal#585dd0f` on blackpill `stm32f401`
 
-
-
-#### Example shtc3-semi
-
-(using crate `shtcx-rs` https://github.com/dbrgn/shtcx-rs)
-Runs with stm32f4xx (blackpill). 
-With stm32g4xx on stm32g474xE  it does not return from the first call to sen.measure()
-
-85  sen.measure()  Normal mode 
-Info : halted: PC: 0x080068f4
-panicked at examples/shtc3-semi.rs:85:65:
-Normal mode measurement failed: I2c(Nack)
-Sometimes works stepping in gdb. Possibly delay needs to be longer?
-
-
-#### Example sht30-em-semi
-
-(using crate `embedded-sht3x` https://gitlab.com/ghislainmary/embedded-sht3x/)
-Runs with stm32f4xx (blackpill). 
-With stm32g4xx on stm32g474xE it does not return from the first call to sen.single_measurement().unwrap().
-81          let th = sen.single_measurement().unwrap(); 
-223          self.i2c.transaction(self.address, &mut operations)?; 
-embedded_hal::i2c::{impl#7}::t* L430 
-   freezes ... halted: PC: 0x080007a8
+   - examples `xca9548a-aht20-bl`, `xca9548a-aht20-dr`, `xca9548a-aht20-em`, and `xca9548a-sht30` work.
+ 
+   - examples `xca9548a-shtc3` gives` Normal mode measurement failedCrc`.
 
 
 
