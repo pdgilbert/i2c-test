@@ -75,12 +75,13 @@ fn main() -> ! {
     sen.repeatability = High;
     
     loop {
-        hprintln!("loop i");      
-        
         hprintln!("sen.measure()");
-        let th = sen.single_measurement().unwrap();   // Read humidity and temperature.
-
-        hprintln!("{:.2}C  {:.2}% RH", th.temperature, th.humidity);
+        let th = sen.single_measurement();   // Read humidity and temperature.
+        
+        match th {
+             Ok(m)      => {hprintln!("{:.2}C  {:.2}% RH", m.temperature, m.humidity); },
+             Err(e)     => {hprintln!("read error {:?}", e); }
+             };
 
         delay2.delay_ms(5000); 
     }

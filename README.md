@@ -11,7 +11,7 @@ The application part of each example is generic code that should work with all M
 The `*semi` examples use semihosting to display sensor readings. 
 This focuses on the sensor crate and eliminates other crates that may cause complications.
 The `xca*` examples include an `ssd1306` display and  a multiplexer
-so muliple sensors can be used.
+so multiple sensors can be used.
 
 Results from compiling examples are reported in the repository 'Actions' tab
 https://github.com/pdgilbert/rust-integration-testing/actions. (This is a small subset of
@@ -51,7 +51,7 @@ cargo build --no-default-features --target $TARGET --features $MCU,$HAL --exampl
 ## Loading
 
 For example, with `openocd`, `gdb`, `.cargo/config` with needed runners, and an appropriate probe  
-in place then in one window run
+in place then in one window start
 ```
 openocd -f interface/stlink.cfg -f target/$PROC.cfg 
 ```
@@ -87,12 +87,12 @@ for my project with multiplexed sensors :
 
 ## Run Testing
 
-All examples and device crates use `embedded-hal v1.0.0 and  `embedded-hal v1.0.0` versions of MCU hals. 
-All examples compile with  stm32f1xx (bluepill), stm32f4xx (blackpill stm32f401 and stm32f411),
-and stm32g4xx (stm32g474xE). (See the github "actions" tab to confirm if that is still true.)
+All examples and device crates use `embedded-hal v1.0.0` and  `embedded-hal v1.0.0` versions of MCU hals. 
+All examples compile with  `stm32f1xx-hal` (bluepill), `stm32f4xx-hal` (blackpill stm32f401 and stm32f411),
+and `stm32g4xx-hal` (stm32g474xE). (See the github "actions" tab to confirm if that is still true.)
 
 Compiling unfortunately does not mean everything works. Results from manually running 
-examples on hardware are below. HALs and device crates may require some level of optimization in order
+examples on hardware are summarized below. HALs and device crates may require some level of optimization in order
 to work on hardware. (See https://github.com/stm32-rs/stm32f4xx-hal/issues/828.) The results below
 are for tests with `release` and `dev` profiles set in `Cargo.toml` as
 
@@ -108,41 +108,18 @@ lto = true
 opt-level = "s" 
 ```
 
-### Summary of hardwaree testing Dec 30-31, 2024:
+### Summary of hardware testing
 
-#### `*semi` examples  [ aht20-bl-semi, aht20-dr-semi, aht20-em-semi, sht30-em-semi, and shtc3-semi ]
+(Examples `aht20-bl-semi`, `aht20-dr-semi`, `aht20-em-semi`, `sht30-em-semi`, `shtc3-semi`,
+ `xca9548a-aht20-bl`, `xca9548a-aht20-dr`, `xca9548a-aht20-em`, `xca9548a-sht30` and `xca9548a-shtc3` )
 
- * Using `stm32f4xx-hal#585dd0f` on blackpill `stm32f401` and `stm32f411` 
+As Dec 30-31, 2024
 
-   -  all examples work (tested with both `dev` and `release` profiles).
+ * Most examples are working using `stm32f4xx-hal#585dd0f` on blackpill `stm32f401` and `stm32f411`.
+ * Many examples are working using `stm32f1xx-hal#6c5dc881` on bluepill (requires `--release`).
+ * Some examples are working using `stm32g4xx-hal` on stm32g474xE. 
 
-
- * Using `stm32f1xx-hal#6c5dc881` on bluepill 
-
-   - example  `sht30-em-semi` gives a "not yet implemented"  error.
-
-   - all other `*semi` examples work. 
-
-
- * Using `stm32g4xx on stm32g474xE example
-
-   - examples `aht20-bl-semi` and `aht20-dr-semi` work both `release and `dev`.
-
-   - example `aht20-em-semi` stalls frequently at `aht.measure()`.
-
-   - example `sht30-em-semi`  stalls at sen.measure().
-
-   - example `shtc3-semi`  panicked at examples/shtc3-semi.rs:86:65: Normal mode measurement failed: I2c(Nack)
-
-
-#### `xca9548a*` examples [ xca9548a-aht20-bl, xca9548a-aht20-dr, xca9548a-aht20-em, xca9548a-sht30 and xca9548a-shtc3 ]
-
- * Using `stm32f4xx-hal#585dd0f` on blackpill `stm32f401`
-
-   - examples `xca9548a-aht20-bl`, `xca9548a-aht20-dr`, `xca9548a-aht20-em`, and `xca9548a-sht30` work.
- 
-   - examples `xca9548a-shtc3` gives` Normal mode measurement failedCrc`.
-
+More details are recorded at https://github.com/pdgilbert/i2c-test/issues/1
 
 
 ## License

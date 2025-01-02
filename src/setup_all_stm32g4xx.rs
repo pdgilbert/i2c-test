@@ -61,7 +61,11 @@ pub fn setup_from_dp(dp: Peripherals) -> (I2c1Type, I2c2Type, LedType, DelayFrom
    led.off();
 
    let timerx = Timer::new(dp.TIM3, &clocks);
-   let  delay = DelayFromCountDownTimer::new(timerx.start_count_down(100.millis()));
+   let  mut delay = DelayFromCountDownTimer::new(timerx.start_count_down(100.millis()));
+
+   led.on();
+   delay.delay_ms(1000);  //set this to a longer duration to do timing test
+   led.off();
 
    (i2c1, i2c2, led, delay, clocks)
 }

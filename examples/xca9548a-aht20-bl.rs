@@ -162,7 +162,8 @@ fn main() -> ! {
        let z = Aht20::new(prt, AltDelay{});  // crate assumes address,
       
        //sensors[i] = Some(z);    // no Result so must manually indicate sensor locations. J1 has i=0
-       if i==0 || i==1 || i==4 || i==5   {sensors[i] = Some(z)}; 
+       //if i==0 || i==1 || i==4 || i==5   {sensors[i] = Some(z)}; 
+       if i==0 || i==1 ||  i==5   {sensors[i] = Some(z)}; 
       
        i += 1;
     };

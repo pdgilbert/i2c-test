@@ -84,8 +84,12 @@ fn main() -> ! {
 
     loop {        
         hprintln!("aht.measure()");
-        let th = aht.measure().unwrap();   // Read humidity and temperature.
-        hprintln!("{:.3}C  {}% RH", th.temperature.celcius(), th.relative_humidity);
+        let th = aht.measure();   // Read humidity and temperature.
+        
+        match th {
+             Ok(m)      => {hprintln!("{:.3}C  {}% RH", m.temperature.celcius(), m.relative_humidity); },
+             Err(e)     => {hprintln!("read error {:?}", e); }
+             };
 
         delay2.delay_ms(5000); 
     }
